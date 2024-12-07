@@ -26,7 +26,7 @@
                 #passwordFile = "/tmp/secret.key"; # Interactive
                 settings = {
                   allowDiscards = true;
-                  keyFile = "/tmp/secret.key";
+                  # keyFile = "/tmp/secret.key";
                 };
                 additionalKeyFiles = [ "/tmp/additionalSecret.key" ];
                 content = {
