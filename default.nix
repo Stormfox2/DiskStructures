@@ -3,15 +3,12 @@
     disk = {
       main = {
         type = "disk";
-        device = "/dev/disk/by-diskseq/1";
+        device = "/dev/vdb";
         content = {
           type = "gpt";
           partitions = {
             ESP = {
-              priority = 1;
-              name = "ESP";
-              start = "1M";
-              end = "256M";
+              size = "512M";
               type = "EF00";
               content = {
                 type = "filesystem";
@@ -20,39 +17,39 @@
                 mountOptions = [ "umask=0077" ];
               };
             };
-            root = {
+            luks = {
               size = "100%";
               content = {
-                type = "btrfs";
-                extraArgs = [ "-f" ]; # Override existing partition
-                # Subvolumes must set a mountpoint in order to be mounted,
-                # unless their parent is mounted
-                subvolumes = {
-                  # Subvolume name is different from mountpoint
-                  "/rootfs" = {
-                    mountpoint = "/";
-                  };
-                  # Subvolume name is the same as the mountpoint
-                  "/home" = {
-                    mountOptions = [ "compress=zstd" ];
-                    mountpoint = "/home";
-                  };
-                  # Parent is not mounted so the mountpoint must be set
-                  "/nix" = {
-                    mountOptions = [ "compress=zstd" "noatime" ];
-                    mountpoint = "/nix";
-                  };
-                  # This subvolume will be created but not mounted
-                  # Subvolume for the swapfile
-                  "/swap" = {
-                    mountpoint = "/.swapvol";
-                    swap = {
-                      swapfile.size = "1G";
+                type = "luks";
+                name = "crypted";
+                # disable settings.keyFile if you want to use interactive password entry
+                #passwordFile = "/tmp/secret.key"; # Interactive
+                settings = {
+                  allowDiscards = true;
+                  keyFile = "/tmp/secret.key";
+                };
+                additionalKeyFiles = [ "/tmp/additionalSecret.key" ];
+                content = {
+                  type = "btrfs";
+                  extraArgs = [ "-f" ];
+                  subvolumes = {
+                    "/root" = {
+                      mountpoint = "/";
+                      mountOptions = [ "compress=zstd" "noatime" ];
+                    };
+                    "/home" = {
+                      mountpoint = "/home";
+                      mountOptions = [ "compress=zstd" "noatime" ];
+                    };
+                    "/nix" = {
+                      mountpoint = "/nix";
+                      mountOptions = [ "compress=zstd" "noatime" ];
+                    };
+                    "/swap" = {
+                      mountpoint = "/.swapvol";
+                      swap.swapfile.size = "20M";
                     };
                   };
-                };
-
-                mountpoint = "/partition-root";
                 };
               };
             };
